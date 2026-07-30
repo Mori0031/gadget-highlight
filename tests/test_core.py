@@ -95,6 +95,7 @@ class CoreTests(unittest.TestCase):
         self.assertIn("white-space:nowrap", page)
         self.assertTrue((ROOT / "docs/privacy/index.html").exists())
         self.assertTrue((ROOT / "docs/sitemap.xml").exists())
+        self.assertTrue((ROOT / "docs/googlee8e91df546a32cf3.html").exists())
         self.assertIsInstance(deals, list)
 
 
