@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import shutil
 from pathlib import Path
 
 import yaml
@@ -14,8 +15,55 @@ DATA = ROOT / "data" / "deals.json"
 OUTPUT = ROOT / "docs" / "index.html"
 
 
+def deal_slug(deal: dict) -> str:
+    return re.sub(r"[^a-zA-Z0-9_-]+", "-", str(deal.get("id", "deal"))).strip("-").lower()
+
+
+def build_deal_pages(output_dir: Path, deals: list[dict], site_url: str) -> list[tuple[str, str]]:
+    deal_root = output_dir / "deals"
+    if deal_root.exists():
+        shutil.rmtree(deal_root)
+    paths: list[tuple[str, str]] = []
+    for deal in deals:
+        if deal.get("is_demo"):
+            continue
+        slug = deal_slug(deal)
+        page_url = f"{site_url}deals/{slug}/"
+        name = str(deal.get("product_name", "商品"))
+        brand = str(deal.get("brand", ""))
+        price = int(deal.get("sale_price") or 0)
+        original = int(deal.get("original_price") or 0)
+        rate = int(deal.get("discount_rate") or 0)
+        verified = str(deal.get("verified_at", ""))
+        merchant = str(deal.get("merchant", ""))
+        description = f"{name}が{rate}%OFF、税込価格¥{price:,}。{merchant}の販売ページで最新価格を確認できます。"
+        offer = {"@type": "Offer", "url": deal.get("affiliate_url", ""), "priceCurrency": "JPY",
+                 "price": price, "availability": "https://schema.org/InStock"}
+        if deal.get("coupon_expires_at"):
+            offer["priceValidUntil"] = deal["coupon_expires_at"]
+        structured = {"@context": "https://schema.org", "@type": "Product", "name": name,
+                      "brand": {"@type": "Brand", "name": brand or merchant}, "offers": offer}
+        if deal.get("image_url"):
+            structured["image"] = [deal["image_url"]]
+        image = (f'<img class="deal-image" src="{html.escape(str(deal["image_url"]))}" '
+                 f'alt="{html.escape(name)}の商品画像">') if deal.get("image_url") else ""
+        document = f'''<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{html.escape(name)}が{rate}%OFF | GADGET Highlight</title><meta name="description" content="{html.escape(description)}"><link rel="canonical" href="{page_url}">
+<meta property="og:type" content="product"><meta property="og:title" content="{html.escape(name)}が{rate}%OFF"><meta property="og:description" content="{html.escape(description)}"><meta property="og:url" content="{page_url}">
+<script type="application/ld+json">{json.dumps(structured, ensure_ascii=False).replace("</", "<\\/")}</script>
+<style>:root{{--bg:#070706;--line:#343029;--ink:#f2eee4;--muted:#989186;--gold:#d0a35c;--amber:#ffb24a}}*{{box-sizing:border-box}}body{{margin:0;background:radial-gradient(circle at 60% -10%,#39220e 0,transparent 34%),var(--bg);color:var(--ink);font-family:Inter,"Noto Sans JP",sans-serif}}main{{max-width:920px;margin:auto;padding:40px 5vw 90px}}header{{padding:0 0 34px;border-bottom:1px solid var(--line);letter-spacing:.24em}}header b{{color:var(--gold)}}article{{padding:48px 0}}.deal-image{{display:block;max-width:100%;max-height:420px;margin:0 auto 36px;object-fit:contain}}.merchant{{color:var(--gold);font-size:.8rem;letter-spacing:.16em}}h1{{font-size:clamp(2rem,6vw,4.4rem);line-height:1.12;margin:20px 0}}.price{{display:flex;gap:22px;align-items:end;margin:30px 0}}.off{{font-size:clamp(2rem,5vw,3.6rem);color:var(--amber);font-weight:700;white-space:nowrap}}del{{color:var(--muted)}}.sale{{font-size:2rem;font-weight:700}}.buy{{display:block;background:var(--gold);color:#080705;text-align:center;text-decoration:none;font-weight:700;padding:18px;margin-top:38px}}.note{{color:var(--muted);font-size:.8rem;line-height:1.8;margin-top:28px}}.back{{color:var(--ink)}}@media(max-width:560px){{.price{{display:block}}.off{{display:block;margin-bottom:12px}}}}</style></head>
+<body><main><header>GADGET <b>HIGHLIGHT</b></header><article>{image}<div class="merchant">{html.escape(merchant)} / {html.escape(brand)}</div><h1>{html.escape(name)}</h1><div class="price"><strong class="off">{rate}% OFF</strong><div><del>¥{original:,}</del><div class="sale">¥{price:,}</div></div></div><a class="buy" href="{html.escape(str(deal.get("affiliate_url", "")))}" rel="nofollow sponsored noopener" target="_blank">販売ページで確認 →</a><p class="note">確認日：{html.escape(verified)}。価格・在庫・割引条件は変動します。購入前に販売ページで最新情報をご確認ください。本ページにはアフィリエイトリンクが含まれます。</p></article><a class="back" href="{site_url}">← セール一覧へ戻る</a></main></body></html>'''
+        target = deal_root / slug / "index.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(document, encoding="utf-8")
+        paths.append((page_url, verified))
+    return paths
+
+
 def build() -> None:
     deals = json.loads(DATA.read_text(encoding="utf-8"))
+    config = yaml.safe_load((ROOT / "config.yml").read_text(encoding="utf-8"))
+    site_url = config["site_url"].rstrip("/") + "/"
     payload = json.dumps(deals, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     page = TEMPLATE.replace("__DATA__", payload)
     page = re.sub(r'<section class="hero">.*?</section>', "", page, count=1, flags=re.DOTALL)
@@ -25,24 +73,25 @@ def build() -> None:
     page = page.replace("観測最安値", "最安値")
     page = page.replace("セール価格で購入 →", "商品を見る →")
     page = page.replace("${esc(d.brand)} / 確認日 ${esc(d.verified_at)}", "${esc(d.brand)}")
+    page = page.replace('<h2 class="product">${esc(d.product_name)}</h2>', '<h2 class="product"><a href="deals/${encodeURIComponent(d.id)}/">${esc(d.product_name)}</a></h2>')
     compact_css = '''<style>
-.top{min-height:92px;gap:24px}.brand{font-size:clamp(1.15rem,2.2vw,1.8rem);font-weight:650;letter-spacing:.27em;white-space:nowrap}.controls{margin-top:24px;margin-bottom:0}.count{margin-top:30px;margin-bottom:18px}.visual{height:260px}.visual img{padding:10px}.product{font-size:clamp(1.25rem,1.8vw,1.75rem);line-height:1.38;margin:22px 0 8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.76em}.merchant{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card{min-height:560px;border:1px solid var(--line)}.card.no-image{min-height:350px}.card.no-image .visual{display:none}.pricing{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:14px;margin:20px 0}.off{font-size:clamp(1.7rem,2.2vw,2.5rem);white-space:nowrap}.prices{text-align:right}.specs{margin-bottom:20px}.grid{grid-template-columns:repeat(3,minmax(0,1fr));background:transparent;border:0;gap:1px}
+.top{min-height:92px;gap:24px}.brand{font-size:clamp(1.15rem,2.2vw,1.8rem);font-weight:650;letter-spacing:.27em;white-space:nowrap}.controls{margin-top:24px;margin-bottom:0}.count{margin-top:30px;margin-bottom:18px}.visual{height:260px}.visual img{padding:10px}.product{font-size:clamp(1.25rem,1.8vw,1.75rem);line-height:1.38;margin:22px 0 8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.76em}.product a{color:inherit;text-decoration:none}.merchant{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card{min-height:560px;border:1px solid var(--line)}.card.no-image{min-height:350px}.card.no-image .visual{display:none}.pricing{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:14px;margin:20px 0}.off{font-size:clamp(1.7rem,2.2vw,2.5rem);white-space:nowrap}.prices{text-align:right}.specs{margin-bottom:20px}.grid{grid-template-columns:repeat(3,minmax(0,1fr));background:transparent;border:0;gap:1px}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:800px){.top{min-height:78px}.brand{font-size:1.05rem;letter-spacing:.2em}.top .status{display:none}.controls{margin-top:16px}.count{margin-top:26px}.grid{grid-template-columns:1fr}.visual{height:230px}.card{min-height:520px}}
 </style>'''
-    page = page.replace("</head>", compact_css + "</head>", 1)
+    seo_head = f'<link rel="canonical" href="{site_url}"><meta property="og:type" content="website"><meta property="og:title" content="GADGET Highlight｜ガジェットセール情報"><meta property="og:description" content="Amazon・楽天市場のガジェット割引とセール価格を掲載"><meta property="og:url" content="{site_url}">'
+    page = page.replace("</head>", seo_head + compact_css + "</head>", 1)
     footer_links = '''<nav style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px"><a href="about/">運営者情報</a><a href="privacy/">プライバシー</a><a href="disclosure/">広告・アフィリエイト表記</a><a href="editorial-policy/">編集方針</a><a href="disclaimer/">免責事項</a><a href="contact/">お問い合わせ</a></nav>'''
     page = page.replace("<footer>", "<footer>" + footer_links, 1)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(page, encoding="utf-8")
     content_paths = build_content_pages(OUTPUT.parent)
-    config = yaml.safe_load((ROOT / "config.yml").read_text(encoding="utf-8"))
-    site_url = config["site_url"].rstrip("/") + "/"
+    deal_paths = build_deal_pages(OUTPUT.parent, deals, site_url)
     (OUTPUT.parent / "robots.txt").write_text(
         f"User-agent: *\nAllow: /\nSitemap: {site_url}sitemap.xml\n", encoding="utf-8"
     )
-    urls = [site_url] + [site_url + path + "/" for path in content_paths]
+    urls = [(site_url, "")] + [(site_url + path + "/", "") for path in content_paths] + deal_paths
     sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "\n".join(
-        f"  <url><loc>{url}</loc></url>" for url in urls
+        f"  <url><loc>{url}</loc>{f'<lastmod>{lastmod}</lastmod>' if lastmod else ''}</url>" for url, lastmod in urls
     ) + "\n</urlset>\n"
     (OUTPUT.parent / "sitemap.xml").write_text(sitemap, encoding="utf-8")
 

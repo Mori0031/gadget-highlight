@@ -36,6 +36,8 @@ jobs:
       - name: Prepare notifications
         env:
           NOTIFY_DRY_RUN: ${{ vars.NOTIFY_DRY_RUN || 'true' }}
+          X_MIN_DISCOUNT: ${{ vars.X_MIN_DISCOUNT || '10' }}
+          X_MAX_POSTS_PER_RUN: ${{ vars.X_MAX_POSTS_PER_RUN || '1' }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           X_API_KEY: ${{ secrets.X_API_KEY }}
           X_API_SECRET: ${{ secrets.X_API_SECRET }}

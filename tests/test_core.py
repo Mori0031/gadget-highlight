@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT))
 import builder
 from collector import clean_product_name, deduplicate_deals, declared_discount, discount_rate, first_image, infer_category
 from manual_deal import valid_amazon_url
+from notifier import candidates_for_x, message
 
 
 class CoreTests(unittest.TestCase):
@@ -51,6 +52,30 @@ class CoreTests(unittest.TestCase):
         self.assertTrue(valid_amazon_url("https://amzn.to/example"))
         self.assertTrue(valid_amazon_url("https://link.amazon/example"))
         self.assertFalse(valid_amazon_url("https://example.com/product"))
+
+    def test_product_detail_page_and_structured_data(self):
+        deal = {"id": "amazon-B012345678", "product_name": "テスト充電器", "brand": "Test",
+                "merchant": "Amazon", "sale_price": 8000, "original_price": 10000,
+                "discount_rate": 20, "verified_at": "2026-07-30", "affiliate_url": "https://example.test",
+                "image_url": "", "is_demo": False}
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = builder.build_deal_pages(Path(tmp), [deal], "https://example.test/")
+            page = (Path(tmp) / "deals/amazon-b012345678/index.html").read_text(encoding="utf-8")
+        self.assertEqual(paths[0][0], "https://example.test/deals/amazon-b012345678/")
+        self.assertIn('"@type": "Product"', page)
+        self.assertIn('rel="canonical"', page)
+
+    def test_x_posts_only_new_or_lower_prices(self):
+        deals = [{"id": "a", "discount_rate": 30, "sale_price": 7000, "is_demo": False},
+                 {"id": "b", "discount_rate": 20, "sale_price": 9000, "is_demo": False}]
+        self.assertEqual([x["id"] for x in candidates_for_x(deals, {"a": 8000, "b": 9000}, 10)], ["a"])
+
+    def test_x_message_links_to_site(self):
+        deal = {"id": "amazon-X", "discount_rate": 20, "product_name": "充電器",
+                "sale_price": 8000, "merchant": "Amazon", "is_all_time_low": False}
+        self.assertIn("https://example.test/deals/amazon-x/", message(deal, "https://example.test/"))
+        self.assertIn("#PR", message(deal, "https://example.test/"))
 
     def test_site_generation(self):
         builder.build()

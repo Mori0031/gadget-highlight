@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 import requests
+import yaml
 
 ROOT = Path(__file__).parent
+STATE = ROOT / "data" / "notified_deals.json"
 
 
 def load_local_env() -> None:
@@ -19,29 +22,63 @@ def load_local_env() -> None:
             os.environ.setdefault(key.strip(), value.strip())
 
 
-def message(deal: dict) -> str:
-    low = " 過去最安値更新" if deal.get("is_all_time_low") else ""
-    return f"【{deal['discount_rate']}%OFF】{deal['product_name']}{low}\n¥{deal['sale_price']:,}｜{deal['merchant']}\n{deal['affiliate_url']}\n#PR #ガジェットセール"
+def slug(deal: dict) -> str:
+    return re.sub(r"[^a-zA-Z0-9_-]+", "-", str(deal.get("id", "deal"))).strip("-").lower()
+
+
+def public_url(deal: dict, site_url: str) -> str:
+    return f"{site_url.rstrip('/')}/deals/{slug(deal)}/"
+
+
+def message(deal: dict, site_url: str) -> str:
+    low = "｜最安値を更新" if deal.get("is_all_time_low") else ""
+    return (f"【{deal['discount_rate']}%OFF】{deal['product_name']}{low}\n"
+            f"¥{deal['sale_price']:,}｜{deal['merchant']}\n"
+            f"{public_url(deal, site_url)}\n#PR #ガジェットセール")
+
+
+def candidates_for_x(deals: list[dict], state: dict[str, int], minimum_discount: int) -> list[dict]:
+    candidates = []
+    for deal in deals:
+        if deal.get("is_demo") or int(deal.get("discount_rate") or 0) < minimum_discount:
+            continue
+        price = int(deal.get("sale_price") or 0)
+        previous = state.get(str(deal.get("id")))
+        if price and (previous is None or price < int(previous)):
+            candidates.append(deal)
+    return sorted(candidates, key=lambda item: (not item.get("is_all_time_low"), -int(item.get("discount_rate") or 0)))
 
 
 def main() -> None:
     load_local_env()
     deals = json.loads((ROOT / "data/deals.json").read_text(encoding="utf-8"))
-    candidates = [item for item in deals if item.get("is_all_time_low") and not item.get("is_demo")]
-    (ROOT / "data/notifications.json").write_text(json.dumps([message(x) for x in candidates], ensure_ascii=False, indent=2), encoding="utf-8")
+    config = yaml.safe_load((ROOT / "config.yml").read_text(encoding="utf-8"))
+    site_url = config["site_url"]
+    state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else {}
+    minimum_discount = int(os.getenv("X_MIN_DISCOUNT", "10"))
+    limit = max(0, int(os.getenv("X_MAX_POSTS_PER_RUN", "1")))
+    candidates = candidates_for_x(deals, state, minimum_discount)[:limit]
+    messages = [message(item, site_url) for item in candidates]
+    (ROOT / "data/notifications.json").write_text(
+        json.dumps(messages, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     if os.getenv("NOTIFY_DRY_RUN", "true").lower() != "false":
-        print(f"dry-run: {len(candidates)} notification(s)")
+        print(f"dry-run: {len(candidates)} X post(s)")
         return
-    discord = os.getenv("DISCORD_WEBHOOK_URL")
+
+    keys = [os.getenv(name) for name in
+            ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET")]
+    if not all(keys):
+        raise RuntimeError("X posting is enabled but X API credentials are incomplete.")
+    from requests_oauthlib import OAuth1
+    auth = OAuth1(*keys)
     for deal in candidates:
-        text = message(deal)
-        if discord:
-            requests.post(discord, json={"content": text, "allowed_mentions": {"parse": []}}, timeout=20).raise_for_status()
-        keys = [os.getenv(name) for name in ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET")]
-        if all(keys):
-            from requests_oauthlib import OAuth1
-            auth = OAuth1(*keys)
-            requests.post("https://api.x.com/2/tweets", json={"text": text}, auth=auth, timeout=20).raise_for_status()
+        response = requests.post("https://api.x.com/2/tweets", json={"text": message(deal, site_url)},
+                                 auth=auth, timeout=20)
+        response.raise_for_status()
+        state[str(deal["id"])] = int(deal["sale_price"])
+    STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"posted: {len(candidates)} X post(s)")
 
 
 if __name__ == "__main__":
