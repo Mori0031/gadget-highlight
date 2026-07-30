@@ -249,10 +249,12 @@ def main(use_demo: bool) -> None:
     if not use_demo:
         manual = [item for item in manual if not item.get("is_demo")]
     previous = read_json(DATA / "deals.json", [])
-    deals = manual + collect_amazon(config) + collect_rakuten(config)
-    if not deals and previous:
+    fresh_external = collect_amazon(config) + collect_rakuten(config)
+    if not fresh_external and previous:
         print("No fresh deals found; preserving the last verified dataset.")
-        deals = previous
+        manual_ids = {item.get("id") for item in manual}
+        fresh_external = [item for item in previous if item.get("id") not in manual_ids]
+    deals = manual + fresh_external
     unique = {item["id"]: item for item in deals if item.get("id")}
     final = update_history(deduplicate_deals(list(unique.values())))
     (DATA / "deals.json").write_text(json.dumps(final, ensure_ascii=False, indent=2), encoding="utf-8")

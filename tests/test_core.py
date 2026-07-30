@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 import builder
 from collector import clean_product_name, deduplicate_deals, declared_discount, discount_rate, first_image, infer_category
+from manual_deal import valid_amazon_url
 
 
 class CoreTests(unittest.TestCase):
@@ -44,6 +45,11 @@ class CoreTests(unittest.TestCase):
 
     def test_product_name_is_bounded(self):
         self.assertLessEqual(len(clean_product_name("商品名" * 40)), 59)
+
+    def test_amazon_url_validation(self):
+        self.assertTrue(valid_amazon_url("https://www.amazon.co.jp/dp/B012345678"))
+        self.assertTrue(valid_amazon_url("https://amzn.to/example"))
+        self.assertFalse(valid_amazon_url("https://example.com/product"))
 
     def test_site_generation(self):
         builder.build()

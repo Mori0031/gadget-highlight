@@ -1,0 +1,83 @@
+name: Add Amazon deal
+
+on:
+  workflow_dispatch:
+    inputs:
+      asin:
+        description: "ASIN（商品ページにある10文字の番号）"
+        required: true
+      title:
+        description: "表示する商品名"
+        required: true
+      amazon_url:
+        description: "SiteStripeで作成したAmazonリンク"
+        required: true
+      category:
+        description: "keyboard / power / pc / audio / smart-home / diy / saas"
+        required: true
+        default: "pc"
+      brand:
+        description: "ブランド名"
+        required: false
+      original_price:
+        description: "通常価格（数字のみ）"
+        required: true
+      sale_price:
+        description: "セール価格（数字のみ）"
+        required: true
+      image_url:
+        description: "使用許可のある公式画像URL（任意）"
+        required: false
+      coupon:
+        description: "クーポンコード（任意）"
+        required: false
+      expires:
+        description: "終了日 YYYY-MM-DD（任意）"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Register Amazon deal
+        env:
+          DEAL_ASIN: ${{ inputs.asin }}
+          DEAL_TITLE: ${{ inputs.title }}
+          DEAL_URL: ${{ inputs.amazon_url }}
+          DEAL_CATEGORY: ${{ inputs.category }}
+          DEAL_BRAND: ${{ inputs.brand }}
+          DEAL_ORIGINAL_PRICE: ${{ inputs.original_price }}
+          DEAL_SALE_PRICE: ${{ inputs.sale_price }}
+          DEAL_IMAGE_URL: ${{ inputs.image_url }}
+          DEAL_COUPON: ${{ inputs.coupon }}
+          DEAL_EXPIRES: ${{ inputs.expires }}
+        run: |
+          python manual_deal.py --asin "$DEAL_ASIN" --title "$DEAL_TITLE" --url "$DEAL_URL" --category "$DEAL_CATEGORY" --brand "$DEAL_BRAND" --original-price "$DEAL_ORIGINAL_PRICE" --sale-price "$DEAL_SALE_PRICE" --image-url "$DEAL_IMAGE_URL" --coupon "$DEAL_COUPON" --expires "$DEAL_EXPIRES"
+      - name: Rebuild all deals
+        env:
+          RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
+          RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
+          RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}
+        run: |
+          python collector.py --no-demo
+          python builder.py
+      - name: Publish update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs
+          git diff --cached --quiet || git commit -m "content: add Amazon deal"
+          git push
