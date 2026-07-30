@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).parent
 MANUAL = ROOT / "data" / "manual_deals.json"
 CATEGORIES = {"keyboard", "power", "pc", "audio", "smart-home", "diy", "saas"}
-AMAZON_HOSTS = {"amazon.co.jp", "www.amazon.co.jp", "amzn.to", "amzn.asia"}
+AMAZON_HOSTS = {"amazon.co.jp", "www.amazon.co.jp", "amzn.to", "amzn.asia", "link.amazon"}
 
 
 def valid_amazon_url(value: str) -> bool:

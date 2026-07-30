@@ -49,6 +49,7 @@ class CoreTests(unittest.TestCase):
     def test_amazon_url_validation(self):
         self.assertTrue(valid_amazon_url("https://www.amazon.co.jp/dp/B012345678"))
         self.assertTrue(valid_amazon_url("https://amzn.to/example"))
+        self.assertTrue(valid_amazon_url("https://link.amazon/example"))
         self.assertFalse(valid_amazon_url("https://example.com/product"))
 
     def test_site_generation(self):
