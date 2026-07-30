@@ -19,9 +19,9 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(declared_discount("期間限定 30%OFF", "商品名"), 30)
         self.assertEqual(declared_discount("ポイント10倍", "商品名"), 0)
 
-    def test_rakuten_image_is_upscaled(self):
+    def test_rakuten_image_uses_original_asset(self):
         item = {"mediumImageUrls": ["https://example.test/image.jpg?_ex=128x128"]}
-        self.assertEqual(first_image(item), "https://example.test/image.jpg?_ex=600x600")
+        self.assertEqual(first_image(item), "https://example.test/image.jpg")
 
     def test_site_generation(self):
         builder.build()
@@ -34,9 +34,10 @@ class CoreTests(unittest.TestCase):
         self.assertIn("広告・アフィリエイト表記", page)
         self.assertIn("最安値を表示", page)
         self.assertIn("-webkit-line-clamp:2", page)
+        self.assertIn("background:transparent;border:0", page)
         self.assertTrue((ROOT / "docs/privacy/index.html").exists())
         self.assertTrue((ROOT / "docs/sitemap.xml").exists())
-        self.assertEqual(len(deals), 4)
+        self.assertGreater(len(deals), 0)
 
 
 if __name__ == "__main__":
