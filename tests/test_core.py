@@ -66,6 +66,8 @@ class CoreTests(unittest.TestCase):
         self.assertIn("商品を見る →", page)
         self.assertNotIn("観測最安値", page)
         self.assertIn("background:transparent;border:0", page)
+        self.assertIn(".card.no-image .visual{display:none}", page)
+        self.assertIn("white-space:nowrap", page)
         self.assertTrue((ROOT / "docs/privacy/index.html").exists())
         self.assertTrue((ROOT / "docs/sitemap.xml").exists())
         self.assertIsInstance(deals, list)
