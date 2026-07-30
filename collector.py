@@ -55,17 +55,26 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
         return []
     endpoint = "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701"
     session = requests.Session()
-    session.headers.update({"User-Agent": USER_AGENT, "accessKey": access_key})
+    site_url = str(config.get("site_url", "https://mori0031.github.io/gadget-highlight/"))
+    session.headers.update({
+        "User-Agent": USER_AGENT,
+        "accessKey": access_key,
+        "Origin": "https://mori0031.github.io",
+        "Referer": site_url,
+    })
     affiliate_id = os.getenv("RAKUTEN_AFFILIATE_ID", "")
     records: list[dict[str, Any]] = []
     for category in config["categories"]:
         for keyword in category["keywords"][:2]:
-            params = {"applicationId": app_id, "keyword": keyword, "hits": 30,
+            params = {"applicationId": app_id, "accessKey": access_key,
+                      "keyword": keyword, "hits": 30,
                       "sort": "-updateTimestamp", "formatVersion": 2, "imageFlag": 1}
             if affiliate_id:
                 params["affiliateId"] = affiliate_id
             response = session.get(endpoint, params=params, timeout=30)
-            response.raise_for_status()
+            if response.status_code >= 400:
+                detail = response.text[:500].replace(access_key, "***")
+                raise RuntimeError(f"Rakuten API returned {response.status_code}: {detail}")
             payload = response.json()
             for wrapped in payload.get("Items", payload.get("items", [])):
                 item = wrapped.get("Item", wrapped)
