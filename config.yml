@@ -1,0 +1,27 @@
+site_name: GADGET Highlight
+site_url: https://mori0031.github.io/gadget-highlight/
+minimum_discount_rate: 5
+request_interval_seconds: 2
+currency: JPY
+categories:
+  - id: keyboard
+    label: メカニカルキーボード
+    keywords: [メカニカルキーボード, ゲーミングキーボード]
+  - id: power
+    label: ポータブル電源
+    keywords: [ポータブル電源, モバイルバッテリー]
+  - id: pc
+    label: PC・周辺機器
+    keywords: [USB-C ハブ, ゲーミングマウス, 4K モニター]
+  - id: audio
+    label: オーディオ
+    keywords: [ワイヤレスイヤホン, USB DAC]
+  - id: smart-home
+    label: スマートホーム
+    keywords: [スマートホーム, スマートロック]
+  - id: diy
+    label: DIY・電子工作
+    keywords: [Raspberry Pi, はんだごて, オシロスコープ]
+  - id: saas
+    label: SaaS・AIツール
+    keywords: [AI ツール, SaaS セール]

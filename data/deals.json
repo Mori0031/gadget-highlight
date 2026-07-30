@@ -1,0 +1,102 @@
+[
+  {
+    "id": "demo-keyboard",
+    "product_name": "75%アルミニウム メカニカルキーボード",
+    "category": "keyboard",
+    "brand": "Example Works",
+    "original_price": 24000,
+    "sale_price": 16800,
+    "key_specs": [
+      "75%レイアウト",
+      "ホットスワップ",
+      "2.4GHz / Bluetooth / USB-C",
+      "アルミケース"
+    ],
+    "coupon_code": "GEAR30",
+    "coupon_expires_at": "2026-08-15",
+    "merchant": "Amazon",
+    "affiliate_url": "https://www.amazon.co.jp/",
+    "image_url": "",
+    "source_url": "https://www.amazon.co.jp/",
+    "verified_at": "2026-07-30",
+    "is_demo": true,
+    "previous_low": 16800,
+    "is_all_time_low": false,
+    "discount_rate": 30
+  },
+  {
+    "id": "demo-power",
+    "product_name": "ポータブル電源 1000Whモデル",
+    "category": "power",
+    "brand": "Example Energy",
+    "original_price": 139800,
+    "sale_price": 97860,
+    "key_specs": [
+      "容量1024Wh",
+      "定格1500W",
+      "リン酸鉄リチウム",
+      "急速充電対応"
+    ],
+    "coupon_code": "",
+    "coupon_expires_at": "",
+    "merchant": "楽天市場",
+    "affiliate_url": "https://www.rakuten.co.jp/",
+    "image_url": "",
+    "source_url": "https://www.rakuten.co.jp/",
+    "verified_at": "2026-07-30",
+    "is_demo": true,
+    "previous_low": 97860,
+    "is_all_time_low": false,
+    "discount_rate": 30
+  },
+  {
+    "id": "demo-dac",
+    "product_name": "デスクトップUSB DAC／ヘッドホンアンプ",
+    "category": "audio",
+    "brand": "Example Audio",
+    "original_price": 49800,
+    "sale_price": 39840,
+    "key_specs": [
+      "USB DAC",
+      "PCM 768kHz",
+      "バランス出力",
+      "Bluetooth 5.1"
+    ],
+    "coupon_code": "AUDIO20",
+    "coupon_expires_at": "2026-08-05",
+    "merchant": "公式ストア",
+    "affiliate_url": "#",
+    "image_url": "",
+    "source_url": "#",
+    "verified_at": "2026-07-30",
+    "is_demo": true,
+    "previous_low": 39840,
+    "is_all_time_low": false,
+    "discount_rate": 20
+  },
+  {
+    "id": "demo-hub",
+    "product_name": "Thunderbolt 4 ドック 14-in-1",
+    "category": "pc",
+    "brand": "Example Lab",
+    "original_price": 45900,
+    "sale_price": 36720,
+    "key_specs": [
+      "Thunderbolt 4",
+      "最大100W給電",
+      "8K出力",
+      "2.5GbE"
+    ],
+    "coupon_code": "",
+    "coupon_expires_at": "",
+    "merchant": "Amazon",
+    "affiliate_url": "https://www.amazon.co.jp/",
+    "image_url": "",
+    "source_url": "https://www.amazon.co.jp/",
+    "verified_at": "2026-07-30",
+    "is_demo": true,
+    "previous_low": 36720,
+    "is_all_time_low": false,
+    "discount_rate": 20
+  }
+]
