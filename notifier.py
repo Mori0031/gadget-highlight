@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -10,6 +11,7 @@ import yaml
 
 ROOT = Path(__file__).parent
 STATE = ROOT / "data" / "notified_deals.json"
+STATUS = ROOT / "data" / "notification_status.json"
 
 
 def load_local_env() -> None:
@@ -63,22 +65,39 @@ def main() -> None:
         json.dumps(messages, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     if os.getenv("NOTIFY_DRY_RUN", "true").lower() != "false":
+        STATUS.write_text(json.dumps({"status": "dry-run", "candidates": len(candidates)},
+                                     ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"dry-run: {len(candidates)} X post(s)")
         return
 
     keys = [os.getenv(name) for name in
             ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET")]
     if not all(keys):
-        raise RuntimeError("X posting is enabled but X API credentials are incomplete.")
+        STATUS.write_text(json.dumps({"status": "warning", "error": "X API credentials are incomplete."},
+                                     ensure_ascii=False, indent=2), encoding="utf-8")
+        print("::warning::X posting is enabled but X API credentials are incomplete.")
+        return
     from requests_oauthlib import OAuth1
     auth = OAuth1(*keys)
+    posted = 0
+    errors: list[dict] = []
     for deal in candidates:
         response = requests.post("https://api.x.com/2/tweets", json={"text": message(deal, site_url)},
                                  auth=auth, timeout=20)
-        response.raise_for_status()
+        if response.status_code >= 400:
+            detail = response.text[:500]
+            errors.append({"deal_id": deal["id"], "status_code": response.status_code,
+                           "detail": detail})
+            print(f"::warning::X post failed for {deal['id']} ({response.status_code}): {detail}")
+            continue
         state[str(deal["id"])] = int(deal["sale_price"])
+        posted += 1
     STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"posted: {len(candidates)} X post(s)")
+    STATUS.write_text(json.dumps({"status": "ok" if not errors else "warning", "posted": posted,
+                                  "errors": errors,
+                                  "checked_at": datetime.now(timezone.utc).isoformat()},
+                                 ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"posted: {posted} X post(s); errors: {len(errors)}")
 
 
 if __name__ == "__main__":

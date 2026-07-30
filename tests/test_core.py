@@ -77,6 +77,11 @@ class CoreTests(unittest.TestCase):
         self.assertIn("https://example.test/deals/amazon-x/", message(deal, "https://example.test/"))
         self.assertIn("#PR", message(deal, "https://example.test/"))
 
+    def test_x_failed_price_is_not_marked_as_sent(self):
+        deals = [{"id": "a", "discount_rate": 30, "sale_price": 7000, "is_demo": False}]
+        self.assertEqual(len(candidates_for_x(deals, {}, 10)), 1)
+        self.assertEqual(len(candidates_for_x(deals, {"a": 7000}, 10)), 0)
+
     def test_site_generation(self):
         builder.build()
         page = builder.OUTPUT.read_text(encoding="utf-8")
