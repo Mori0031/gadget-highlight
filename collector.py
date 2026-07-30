@@ -46,7 +46,8 @@ def first_image(item: dict[str, Any]) -> str:
     if not images:
         return ""
     first = images[0]
-    return first if isinstance(first, str) else first.get("imageUrl", "")
+    url = first if isinstance(first, str) else first.get("imageUrl", "")
+    return re.sub(r"([?&]_ex=)\d+x\d+", r"\g<1>600x600", url)
 
 
 def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
