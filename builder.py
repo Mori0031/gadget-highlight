@@ -22,6 +22,8 @@ def build() -> None:
     page = page.replace("document.getElementById('hero-count').textContent=deals.length;", "")
     page = page.replace("価格シグナル / 日本市場", "Amazon・楽天市場・公式ストアの価格情報")
     page = page.replace("観測最安値を優先", "最安値を表示")
+    page = page.replace("観測最安値", "最安値")
+    page = page.replace("セール価格で購入 →", "商品を見る →")
     page = page.replace("${esc(d.brand)} / 確認日 ${esc(d.verified_at)}", "${esc(d.brand)}")
     compact_css = '''<style>
 .top{min-height:92px;gap:24px}.brand{font-size:clamp(1.15rem,2.2vw,1.8rem);font-weight:650;letter-spacing:.27em;white-space:nowrap}.controls{margin-top:24px;margin-bottom:0}.count{margin-top:30px;margin-bottom:18px}.visual{height:260px}.visual img{padding:10px}.product{font-size:clamp(1.25rem,1.8vw,1.75rem);line-height:1.38;margin:22px 0 8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.76em}.merchant{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card{min-height:560px;border:1px solid var(--line)}.pricing{margin:20px 0}.specs{margin-bottom:20px}.grid{grid-template-columns:repeat(3,minmax(0,1fr));background:transparent;border:0;gap:1px}

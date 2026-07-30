@@ -86,6 +86,20 @@ def deduplicate_deals(deals: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return list(unique.values())
 
 
+def clean_product_name(title: str, limit: int = 58) -> str:
+    """Remove sale decoration while preserving the factual product wording."""
+    text = re.sub(r"[★☆♪＼／]+", " ", title)
+    text = re.sub(r"【[^】]*(?:OFF|セール|限定|ポイント|クーポン)[^】]*】", " ", text,
+                  flags=re.IGNORECASE)
+    text = re.sub(r"(?<!\d)\d{1,2}\s*%\s*OFF", " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"(?:期間限定|数量限定|最大|半額セール|入学祝い|新生活)", " ", text)
+    text = re.sub(r"\s+", " ", text).strip(" -・!！,，")
+    if len(text) <= limit:
+        return text
+    shortened = text[:limit].rstrip(" -・!！,，")
+    return shortened + "…"
+
+
 def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
     app_id, access_key = os.getenv("RAKUTEN_APPLICATION_ID"), os.getenv("RAKUTEN_ACCESS_KEY")
     if not app_id or not access_key:
@@ -122,7 +136,8 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
                 original = round(sale / (1 - rate / 100))
                 records.append({
                     "id": "rakuten-" + str(item.get("itemCode", "")).replace(":", "-"),
-                    "product_name": item.get("itemName", ""),
+                    "product_name": clean_product_name(item.get("itemName", "")),
+                    "source_title": item.get("itemName", ""),
                     "category": infer_category(item.get("itemName", ""), category["id"]),
                     "brand": item.get("shopName", ""), "original_price": original,
                     "sale_price": sale, "key_specs": [], "coupon_code": "",
