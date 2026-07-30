@@ -51,6 +51,37 @@ def first_image(item: dict[str, Any]) -> str:
     return re.sub(r"[?&]_ex=\d+x\d+(?=&|$)", "", url).rstrip("?&")
 
 
+CATEGORY_TERMS = {
+    "keyboard": ("キーボード", "keycap", "キーキャップ", "switch", "スイッチ"),
+    "power": ("ポータブル電源", "モバイルバッテリー", "充電器", "charger", "電源"),
+    "pc": ("usb", "type-c", "パソコン", "pc", "モニター", "マウス", "ハブ", "ドッキング"),
+    "audio": ("イヤホン", "ヘッドホン", "スピーカー", "dac", "マイク", "オーディオ"),
+    "smart-home": ("スマートホーム", "スマートロック", "見守り", "センサー", "alexa"),
+    "diy": ("raspberry pi", "はんだ", "電子工作", "オシロスコープ", "arduino"),
+    "saas": ("saas", "aiツール", "ソフトウェア", "ライセンス"),
+}
+
+
+def infer_category(title: str, fallback: str) -> str:
+    text = title.casefold()
+    scores = {category: sum(term in text for term in terms)
+              for category, terms in CATEGORY_TERMS.items()}
+    category, score = max(scores.items(), key=lambda pair: pair[1])
+    return category if score else fallback
+
+
+def deduplicate_deals(deals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep the cheapest listing when the same product image is repeated."""
+    unique: dict[str, dict[str, Any]] = {}
+    for deal in deals:
+        image = str(deal.get("image_url") or "").split("?", 1)[0].casefold()
+        key = f"image:{image}" if image else f"id:{deal.get('id', '')}"
+        current = unique.get(key)
+        if current is None or int(deal.get("sale_price") or 0) < int(current.get("sale_price") or 0):
+            unique[key] = deal
+    return list(unique.values())
+
+
 def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
     app_id, access_key = os.getenv("RAKUTEN_APPLICATION_ID"), os.getenv("RAKUTEN_ACCESS_KEY")
     if not app_id or not access_key:
@@ -67,7 +98,7 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
     affiliate_id = os.getenv("RAKUTEN_AFFILIATE_ID", "")
     records: list[dict[str, Any]] = []
     for category in config["categories"]:
-        for keyword in category["keywords"][:2]:
+        for keyword in category["keywords"][:3]:
             params = {"applicationId": app_id, "accessKey": access_key,
                       "keyword": keyword, "hits": 30,
                       "sort": "-updateTimestamp", "formatVersion": 2, "imageFlag": 1}
@@ -87,7 +118,8 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
                 original = round(sale / (1 - rate / 100))
                 records.append({
                     "id": "rakuten-" + str(item.get("itemCode", "")).replace(":", "-"),
-                    "product_name": item.get("itemName", ""), "category": category["id"],
+                    "product_name": item.get("itemName", ""),
+                    "category": infer_category(item.get("itemName", ""), category["id"]),
                     "brand": item.get("shopName", ""), "original_price": original,
                     "sale_price": sale, "key_specs": [], "coupon_code": "",
                     "coupon_expires_at": "", "merchant": "楽天市場",
@@ -199,7 +231,7 @@ def main(use_demo: bool) -> None:
         manual = [item for item in manual if not item.get("is_demo")]
     deals = manual + collect_amazon(config) + collect_rakuten(config)
     unique = {item["id"]: item for item in deals if item.get("id")}
-    final = update_history(list(unique.values()))
+    final = update_history(deduplicate_deals(list(unique.values())))
     (DATA / "deals.json").write_text(json.dumps(final, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"deals": len(final), "amazon": amazon_status()}, ensure_ascii=False))
 

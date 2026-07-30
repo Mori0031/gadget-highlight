@@ -7,7 +7,7 @@ ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
 
 import builder
-from collector import declared_discount, discount_rate, first_image
+from collector import deduplicate_deals, declared_discount, discount_rate, first_image, infer_category
 
 
 class CoreTests(unittest.TestCase):
@@ -22,6 +22,17 @@ class CoreTests(unittest.TestCase):
     def test_rakuten_image_uses_original_asset(self):
         item = {"mediumImageUrls": ["https://example.test/image.jpg?_ex=128x128"]}
         self.assertEqual(first_image(item), "https://example.test/image.jpg")
+
+    def test_category_is_inferred_from_product(self):
+        self.assertEqual(infer_category("USB-C ドッキングステーション", "audio"), "pc")
+        self.assertEqual(infer_category("ワイヤレスイヤホン", "pc"), "audio")
+
+    def test_duplicate_image_keeps_lower_price(self):
+        deals = [
+            {"id": "a", "image_url": "https://example.test/a.jpg?_ex=128x128", "sale_price": 9000},
+            {"id": "b", "image_url": "https://example.test/a.jpg", "sale_price": 8000},
+        ]
+        self.assertEqual([item["id"] for item in deduplicate_deals(deals)], ["b"])
 
     def test_site_generation(self):
         builder.build()
