@@ -19,6 +19,10 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(declared_discount("期間限定 30%OFF", "商品名"), 30)
         self.assertEqual(declared_discount("ポイント10倍", "商品名"), 0)
 
+    def test_japanese_discount_phrases(self):
+        self.assertEqual(declared_discount("期間限定 半額セール"), 50)
+        self.assertEqual(declared_discount("3割引"), 30)
+
     def test_rakuten_image_uses_original_asset(self):
         item = {"mediumImageUrls": ["https://example.test/image.jpg?_ex=128x128"]}
         self.assertEqual(first_image(item), "https://example.test/image.jpg")

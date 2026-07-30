@@ -38,7 +38,11 @@ def discount_rate(original: int, sale: int) -> int:
 def declared_discount(*texts: str) -> int:
     combined = " ".join(texts)
     matches = re.findall(r"(?<!\d)(\d{1,2})\s*%\s*(?:OFF|オフ|引き)", combined, flags=re.IGNORECASE)
-    return max((int(value) for value in matches if 5 <= int(value) < 100), default=0)
+    rates = [int(value) for value in matches if 5 <= int(value) < 100]
+    if "半額" in combined:
+        rates.append(50)
+    rates.extend(int(value) * 10 for value in re.findall(r"(?<!\d)([1-9])\s*割引", combined))
+    return max(rates, default=0)
 
 
 def first_image(item: dict[str, Any]) -> str:
@@ -101,7 +105,7 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
         for keyword in category["keywords"][:3]:
             params = {"applicationId": app_id, "accessKey": access_key,
                       "keyword": keyword, "hits": 30,
-                      "sort": "-updateTimestamp", "formatVersion": 2, "imageFlag": 1}
+                      "formatVersion": 2, "imageFlag": 1}
             if affiliate_id:
                 params["affiliateId"] = affiliate_id
             response = session.get(endpoint, params=params, timeout=30)
@@ -229,7 +233,11 @@ def main(use_demo: bool) -> None:
     manual = read_json(DATA / "manual_deals.json", [])
     if not use_demo:
         manual = [item for item in manual if not item.get("is_demo")]
+    previous = read_json(DATA / "deals.json", [])
     deals = manual + collect_amazon(config) + collect_rakuten(config)
+    if not deals and previous:
+        print("No fresh deals found; preserving the last verified dataset.")
+        deals = previous
     unique = {item["id"]: item for item in deals if item.get("id")}
     final = update_history(deduplicate_deals(list(unique.values())))
     (DATA / "deals.json").write_text(json.dumps(final, ensure_ascii=False, indent=2), encoding="utf-8")
