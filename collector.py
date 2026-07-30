@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,6 +35,20 @@ def discount_rate(original: int, sale: int) -> int:
     return round((original - sale) / original * 100) if original > sale > 0 else 0
 
 
+def declared_discount(*texts: str) -> int:
+    combined = " ".join(texts)
+    matches = re.findall(r"(?<!\d)(\d{1,2})\s*%\s*(?:OFF|オフ|引き)", combined, flags=re.IGNORECASE)
+    return max((int(value) for value in matches if 5 <= int(value) < 100), default=0)
+
+
+def first_image(item: dict[str, Any]) -> str:
+    images = item.get("mediumImageUrls") or []
+    if not images:
+        return ""
+    first = images[0]
+    return first if isinstance(first, str) else first.get("imageUrl", "")
+
+
 def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
     app_id, access_key = os.getenv("RAKUTEN_APPLICATION_ID"), os.getenv("RAKUTEN_ACCESS_KEY")
     if not app_id or not access_key:
@@ -45,7 +60,8 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for category in config["categories"]:
         for keyword in category["keywords"][:2]:
-            params = {"applicationId": app_id, "keyword": keyword, "hits": 20, "sort": "-reviewCount"}
+            params = {"applicationId": app_id, "keyword": keyword, "hits": 30,
+                      "sort": "-updateTimestamp", "formatVersion": 2, "imageFlag": 1}
             if affiliate_id:
                 params["affiliateId"] = affiliate_id
             response = session.get(endpoint, params=params, timeout=30)
@@ -54,10 +70,10 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
             for wrapped in payload.get("Items", payload.get("items", [])):
                 item = wrapped.get("Item", wrapped)
                 sale = int(item.get("itemPrice") or 0)
-                original = int(item.get("itemPriceBase") or item.get("itemPrice") or 0)
-                rate = discount_rate(original, sale)
+                rate = declared_discount(item.get("catchcopy", ""), item.get("itemName", ""))
                 if rate < int(config["minimum_discount_rate"]):
                     continue
+                original = round(sale / (1 - rate / 100))
                 records.append({
                     "id": "rakuten-" + str(item.get("itemCode", "")).replace(":", "-"),
                     "product_name": item.get("itemName", ""), "category": category["id"],
@@ -65,7 +81,7 @@ def collect_rakuten(config: dict[str, Any]) -> list[dict[str, Any]]:
                     "sale_price": sale, "key_specs": [], "coupon_code": "",
                     "coupon_expires_at": "", "merchant": "楽天市場",
                     "affiliate_url": item.get("affiliateUrl") or item.get("itemUrl", ""),
-                    "image_url": ((item.get("mediumImageUrls") or [{}])[0].get("imageUrl", "")),
+                    "image_url": first_image(item),
                     "source_url": item.get("itemUrl", ""),
                     "verified_at": datetime.now(timezone.utc).date().isoformat(), "is_demo": False,
                 })

@@ -7,13 +7,17 @@ ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
 
 import builder
-from collector import discount_rate
+from collector import declared_discount, discount_rate
 
 
 class CoreTests(unittest.TestCase):
     def test_discount_rate(self):
         self.assertEqual(discount_rate(15000, 10500), 30)
         self.assertEqual(discount_rate(10000, 10000), 0)
+
+    def test_declared_discount(self):
+        self.assertEqual(declared_discount("期間限定 30%OFF", "商品名"), 30)
+        self.assertEqual(declared_discount("ポイント10倍", "商品名"), 0)
 
     def test_site_generation(self):
         builder.build()
