@@ -133,6 +133,8 @@ class CoreTests(unittest.TestCase):
         self.assertIn("background:transparent;border:0", page)
         self.assertIn(".card.no-image .visual{display:none}", page)
         self.assertIn("white-space:nowrap", page)
+        self.assertIn('deals/${encodeURIComponent(String(d.id).toLowerCase())}/', page)
+        self.assertNotIn('deals/${encodeURIComponent(d.id)}/', page)
         self.assertTrue((ROOT / "docs/privacy/index.html").exists())
         self.assertTrue((ROOT / "docs/sitemap.xml").exists())
         self.assertTrue((ROOT / "docs/googlee8e91df546a32cf3.html").exists())

@@ -83,7 +83,10 @@ def build() -> None:
     page = page.replace("観測最安値", "最安値")
     page = page.replace("セール価格で購入 →", "商品を見る →")
     page = page.replace("${esc(d.brand)} / 確認日 ${esc(d.verified_at)}", "${esc(d.brand)}")
-    page = page.replace('<h2 class="product">${esc(d.product_name)}</h2>', '<h2 class="product"><a href="deals/${encodeURIComponent(d.id)}/">${esc(d.product_name)}</a></h2>')
+    page = page.replace(
+        '<h2 class="product">${esc(d.product_name)}</h2>',
+        '<h2 class="product"><a href="deals/${encodeURIComponent(String(d.id).toLowerCase())}/">${esc(d.product_name)}</a></h2>',
+    )
     compact_css = '''<style>
 .top{min-height:92px;gap:24px}.brand{font-size:clamp(1.15rem,2.2vw,1.8rem);font-weight:650;letter-spacing:.27em;white-space:nowrap}.controls{margin-top:24px;margin-bottom:0}.count{margin-top:30px;margin-bottom:18px}.visual{height:260px}.visual img{padding:10px}.product{font-size:clamp(1.25rem,1.8vw,1.75rem);line-height:1.38;margin:22px 0 8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.76em}.product a{color:inherit;text-decoration:none}.merchant{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card{min-height:560px;border:1px solid var(--line)}.card.no-image{min-height:350px}.card.no-image .visual{display:none}.pricing{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:14px;margin:20px 0}.off{font-size:clamp(1.7rem,2.2vw,2.5rem);white-space:nowrap}.prices{text-align:right}.specs{margin-bottom:20px}.grid{grid-template-columns:repeat(3,minmax(0,1fr));background:transparent;border:0;gap:1px}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:800px){.top{min-height:78px}.brand{font-size:1.05rem;letter-spacing:.2em}.top .status{display:none}.controls{margin-top:16px}.count{margin-top:26px}.grid{grid-template-columns:1fr}.visual{height:230px}.card{min-height:520px}}
