@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import base64
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,6 +52,48 @@ def candidates_for_x(deals: list[dict], state: dict[str, int], minimum_discount:
     return sorted(candidates, key=lambda item: (not item.get("is_all_time_low"), -int(item.get("discount_rate") or 0)))
 
 
+def post_payload(deal: dict, site_url: str, media_id: str = "") -> dict:
+    payload = {"text": message(deal, site_url)}
+    if media_id:
+        payload["media"] = {"media_ids": [media_id]}
+    return payload
+
+
+def upload_x_image(deal: dict, auth) -> str:
+    image_url = str(deal.get("image_url") or "")
+    if not image_url.startswith("https://"):
+        return ""
+    try:
+        image_response = requests.get(
+            image_url,
+            headers={"User-Agent": "GADGET-Highlight/1.0 (+https://mori0031.github.io/gadget-highlight/)"},
+            timeout=20,
+        )
+        image_response.raise_for_status()
+        media_type = image_response.headers.get("Content-Type", "").split(";", 1)[0].lower()
+        allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+        if media_type not in allowed or len(image_response.content) > 5 * 1024 * 1024:
+            return ""
+        upload = requests.post(
+            "https://api.x.com/2/media/upload",
+            json={
+                "media": base64.b64encode(image_response.content).decode("ascii"),
+                "media_category": "tweet_image",
+                "media_type": media_type,
+                "shared": False,
+            },
+            auth=auth,
+            timeout=30,
+        )
+        if upload.status_code >= 400:
+            print(f"::warning::X image upload failed for {deal['id']} ({upload.status_code}). Posting text only.")
+            return ""
+        return str(upload.json().get("data", {}).get("id") or "")
+    except requests.RequestException as exc:
+        print(f"::warning::Product image could not be prepared for {deal['id']}: {exc}")
+        return ""
+
+
 def main() -> None:
     load_local_env()
     deals = json.loads((ROOT / "data/deals.json").read_text(encoding="utf-8"))
@@ -82,7 +125,8 @@ def main() -> None:
     posted = 0
     errors: list[dict] = []
     for deal in candidates:
-        response = requests.post("https://api.x.com/2/tweets", json={"text": message(deal, site_url)},
+        media_id = upload_x_image(deal, auth)
+        response = requests.post("https://api.x.com/2/tweets", json=post_payload(deal, site_url, media_id),
                                  auth=auth, timeout=20)
         if response.status_code >= 400:
             detail = response.text[:500]

@@ -10,7 +10,7 @@ import builder
 from collector import clean_product_name, deduplicate_deals, declared_discount, discount_rate, first_image, infer_category
 from manual_deal import valid_amazon_url
 from deal_status import set_status
-from notifier import candidates_for_x, message
+from notifier import candidates_for_x, message, post_payload
 
 
 class CoreTests(unittest.TestCase):
@@ -82,6 +82,24 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(paths[0][0], "https://example.test/deals/amazon-b012345678/")
         self.assertIn('"@type": "Product"', page)
         self.assertIn('rel="canonical"', page)
+
+    def test_product_detail_page_has_social_image_metadata(self):
+        deal = {"id": "rakuten-image", "product_name": "画像付き商品", "brand": "Test",
+                "merchant": "楽天市場", "sale_price": 8000, "original_price": 10000,
+                "discount_rate": 20, "verified_at": "2026-08-01", "affiliate_url": "https://example.test",
+                "image_url": "https://example.test/item.jpg", "is_demo": False}
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            builder.build_deal_pages(Path(tmp), [deal], "https://example.test/")
+            page = (Path(tmp) / "deals/rakuten-image/index.html").read_text(encoding="utf-8")
+        self.assertIn('name="twitter:card" content="summary_large_image"', page)
+        self.assertIn('property="og:image" content="https://example.test/item.jpg"', page)
+
+    def test_x_payload_attaches_media_when_available(self):
+        deal = {"id": "a", "discount_rate": 20, "product_name": "商品",
+                "sale_price": 8000, "merchant": "楽天市場", "is_all_time_low": False}
+        self.assertEqual(post_payload(deal, "https://example.test", "123")["media"], {"media_ids": ["123"]})
+        self.assertNotIn("media", post_payload(deal, "https://example.test"))
 
     def test_x_posts_only_new_or_lower_prices(self):
         deals = [{"id": "a", "discount_rate": 30, "sale_price": 7000, "is_demo": False},
