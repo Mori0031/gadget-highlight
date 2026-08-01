@@ -4,6 +4,7 @@ import html
 import json
 import re
 import shutil
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -62,6 +63,12 @@ def build_deal_pages(output_dir: Path, deals: list[dict], site_url: str) -> list
 
 def build() -> None:
     deals = json.loads(DATA.read_text(encoding="utf-8"))
+    today = date.today().isoformat()
+    deals = [
+        deal for deal in deals
+        if deal.get("is_active", True)
+        and (not deal.get("coupon_expires_at") or deal["coupon_expires_at"] >= today)
+    ]
     config = yaml.safe_load((ROOT / "config.yml").read_text(encoding="utf-8"))
     site_url = config["site_url"].rstrip("/") + "/"
     payload = json.dumps(deals, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")

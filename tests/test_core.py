@@ -9,10 +9,27 @@ sys.path.insert(0, str(ROOT))
 import builder
 from collector import clean_product_name, deduplicate_deals, declared_discount, discount_rate, first_image, infer_category
 from manual_deal import valid_amazon_url
+from deal_status import set_status
 from notifier import candidates_for_x, message
 
 
 class CoreTests(unittest.TestCase):
+    def test_inactive_deals_are_not_published(self):
+        import tempfile
+        original_data = builder.DATA
+        original_output = builder.OUTPUT
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = root / "deals.json"
+            output = root / "docs" / "index.html"
+            data.write_text(json.dumps([{"id": "hidden", "is_active": False}], ensure_ascii=False), encoding="utf-8")
+            builder.DATA, builder.OUTPUT = data, output
+            try:
+                builder.build()
+                self.assertNotIn('"id":"hidden"', output.read_text(encoding="utf-8"))
+            finally:
+                builder.DATA, builder.OUTPUT = original_data, original_output
+
     def test_discount_rate(self):
         self.assertEqual(discount_rate(15000, 10500), 30)
         self.assertEqual(discount_rate(10000, 10000), 0)

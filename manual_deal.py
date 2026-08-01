@@ -46,6 +46,8 @@ def upsert_amazon(args: argparse.Namespace) -> dict:
         "image_url": args.image_url.strip(),
         "source_url": args.url,
         "verified_at": datetime.now(timezone.utc).date().isoformat(),
+        "is_active": True,
+        "inactive_reason": "",
         "is_demo": False,
     }
     existing = json.loads(MANUAL.read_text(encoding="utf-8")) if MANUAL.exists() else []

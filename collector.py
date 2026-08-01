@@ -5,7 +5,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -246,6 +246,12 @@ def main(use_demo: bool) -> None:
     load_local_env()
     config = yaml.safe_load((ROOT / "config.yml").read_text(encoding="utf-8"))
     manual = read_json(DATA / "manual_deals.json", [])
+    today = date.today().isoformat()
+    manual = [
+        item for item in manual
+        if item.get("is_active", True)
+        and (not item.get("coupon_expires_at") or item["coupon_expires_at"] >= today)
+    ]
     if not use_demo:
         manual = [item for item in manual if not item.get("is_demo")]
     previous = read_json(DATA / "deals.json", [])
