@@ -33,11 +33,24 @@ def public_url(deal: dict, site_url: str) -> str:
     return f"{site_url.rstrip('/')}/deals/{slug(deal)}/"
 
 
+def short_product_name(value: object, limit: int = 38) -> str:
+    """Keep X copy scannable without changing the product facts."""
+    name = re.sub(r"\s+", " ", str(value or "")).strip()
+    if len(name) <= limit:
+        return name
+    return name[:limit].rstrip(" ・、,/-") + "…"
+
+
 def message(deal: dict, site_url: str) -> str:
-    low = "｜最安値を更新" if deal.get("is_all_time_low") else ""
-    return (f"【{deal['discount_rate']}%OFF】{deal['product_name']}{low}\n"
-            f"¥{deal['sale_price']:,}｜{deal['merchant']}\n"
-            f"{public_url(deal, site_url)}\n#PR #ガジェットセール")
+    name = short_product_name(deal.get("product_name"))
+    original = int(deal.get("original_price") or 0)
+    sale = int(deal.get("sale_price") or 0)
+    merchant = str(deal.get("merchant") or "販売サイト")
+    price_line = f"通常 ¥{original:,} → ¥{sale:,}" if original > sale else f"現在 ¥{sale:,}"
+    return (f"【{int(deal.get('discount_rate') or 0)}%OFF】{name}\n\n"
+            f"{price_line}\n"
+            f"{merchant}で価格を見る👇\n"
+            f"{public_url(deal, site_url)}\n\n#PR")
 
 
 def candidates_for_x(deals: list[dict], state: dict[str, int], minimum_discount: int) -> list[dict]:

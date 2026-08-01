@@ -10,7 +10,7 @@ import builder
 from collector import clean_product_name, deduplicate_deals, declared_discount, discount_rate, first_image, infer_category
 from manual_deal import valid_amazon_url
 from deal_status import set_status
-from notifier import candidates_for_x, message, post_payload
+from notifier import candidates_for_x, message, post_payload, short_product_name
 
 
 class CoreTests(unittest.TestCase):
@@ -107,10 +107,20 @@ class CoreTests(unittest.TestCase):
         self.assertEqual([x["id"] for x in candidates_for_x(deals, {"a": 8000, "b": 9000}, 10)], ["a"])
 
     def test_x_message_links_to_site(self):
-        deal = {"id": "amazon-X", "discount_rate": 20, "product_name": "充電器",
-                "sale_price": 8000, "merchant": "Amazon", "is_all_time_low": False}
-        self.assertIn("https://example.test/deals/amazon-x/", message(deal, "https://example.test/"))
-        self.assertIn("#PR", message(deal, "https://example.test/"))
+        deal = {"id": "amazon-X", "discount_rate": 20, "product_name": "USB-C充電器",
+                "original_price": 10000, "sale_price": 8000,
+                "merchant": "Amazon", "is_all_time_low": False}
+        text = message(deal, "https://example.test/")
+        self.assertIn("【20%OFF】USB-C充電器", text)
+        self.assertIn("通常 ¥10,000 → ¥8,000", text)
+        self.assertIn("Amazonで価格を見る👇", text)
+        self.assertIn("https://example.test/deals/amazon-x/", text)
+        self.assertTrue(text.endswith("#PR"))
+        self.assertNotIn("#ガジェットセール", text)
+
+    def test_x_product_name_is_shortened(self):
+        self.assertEqual(short_product_name("A" * 45), "A" * 38 + "…")
+        self.assertEqual(short_product_name("  USB-C   充電器  "), "USB-C 充電器")
 
     def test_x_failed_price_is_not_marked_as_sent(self):
         deals = [{"id": "a", "discount_rate": 30, "sale_price": 7000, "is_demo": False}]
