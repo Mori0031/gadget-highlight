@@ -472,5 +472,35 @@
       "date": "2026-08-01",
       "price": 1880
     }
+  ],
+  "amazon-B0G711B3B5": [
+    {
+      "date": "2026-08-01",
+      "price": 3439
+    }
+  ],
+  "amazon-B0GSRK1N6D": [
+    {
+      "date": "2026-08-01",
+      "price": 5984
+    }
+  ],
+  "amazon-B0GD1698XY": [
+    {
+      "date": "2026-08-01",
+      "price": 2369
+    }
+  ],
+  "amazon-B0D2L2TJFH": [
+    {
+      "date": "2026-08-01",
+      "price": 3808
+    }
+  ],
+  "amazon-B0F8BWQD33": [
+    {
+      "date": "2026-08-01",
+      "price": 5544
+    }
   ]
 }
