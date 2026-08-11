@@ -1,6 +1,12 @@
 {
-  "status": "ok",
-  "posted": 1,
-  "errors": [],
-  "checked_at": "2026-08-10T23:36:16.430630+00:00"
+  "status": "warning",
+  "posted": 0,
+  "errors": [
+    {
+      "deal_id": "amazon-B0F8BWQD33",
+      "status_code": 402,
+      "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
+    }
+  ],
+  "checked_at": "2026-08-11T11:44:25.608890+00:00"
 }
