@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-lovleopstore-10000061",
+      "deal_id": "amazon-B0F8BWQD33",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-13T23:42:02.160506+00:00"
+  "checked_at": "2026-08-14T11:44:25.201844+00:00"
 }
