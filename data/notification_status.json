@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "amazon-B0F8BWQD33",
+      "deal_id": "rakuten-gracevally-10000025",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-15T23:21:41.075102+00:00"
+  "checked_at": "2026-08-16T11:21:07.026416+00:00"
 }
