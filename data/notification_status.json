@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-dasimon-10000002",
+      "deal_id": "rakuten-amber888-10000109",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-20T23:26:37.821212+00:00"
+  "checked_at": "2026-08-21T11:27:05.822996+00:00"
 }
