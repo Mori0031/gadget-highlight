@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-dasimon-10000012",
+      "deal_id": "rakuten-heystop-10000143",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-22T23:22:08.015436+00:00"
+  "checked_at": "2026-08-23T11:21:34.427041+00:00"
 }
