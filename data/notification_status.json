@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-gracevally-10000025",
+      "deal_id": "rakuten-krdirect-10002212",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-24T23:23:36.142522+00:00"
+  "checked_at": "2026-08-25T11:28:48.473107+00:00"
 }
