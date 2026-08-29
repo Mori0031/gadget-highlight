@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-krdirect-10002212",
+      "deal_id": "rakuten-everything-mart-10034924",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-28T21:20:24.021356+00:00"
+  "checked_at": "2026-08-29T04:02:56.810929+00:00"
 }
