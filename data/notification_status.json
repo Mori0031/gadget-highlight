@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-lovleopstore-10000061",
+      "deal_id": "rakuten-dasimon-10000012",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-08-31T17:56:40.609809+00:00"
+  "checked_at": "2026-09-01T01:42:30.101720+00:00"
 }
