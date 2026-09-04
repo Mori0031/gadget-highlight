@@ -6967,6 +6967,10 @@
     {
       "date": "2026-08-17",
       "price": 2580
+    },
+    {
+      "date": "2026-09-04",
+      "price": 2080
     }
   ],
   "rakuten-kotosquare-jvckenwood-10000684": [
@@ -7371,6 +7375,10 @@
     {
       "date": "2026-08-26",
       "price": 1980
+    },
+    {
+      "date": "2026-09-04",
+      "price": 1980
     }
   ],
   "rakuten-ugreen-gear-10001079": [
@@ -7653,6 +7661,42 @@
     {
       "date": "2026-09-03",
       "price": 1980
+    }
+  ],
+  "rakuten-krdirect-10002182": [
+    {
+      "date": "2026-09-04",
+      "price": 2490
+    }
+  ],
+  "rakuten-krdirect-10002289": [
+    {
+      "date": "2026-09-04",
+      "price": 2490
+    }
+  ],
+  "rakuten-c-c-s-10000211": [
+    {
+      "date": "2026-09-04",
+      "price": 66430
+    }
+  ],
+  "rakuten-tsubasakaden-10000007": [
+    {
+      "date": "2026-09-04",
+      "price": 2080
+    }
+  ],
+  "rakuten-beneru-10000014": [
+    {
+      "date": "2026-09-04",
+      "price": 3680
+    }
+  ],
+  "rakuten-beneru-10000004": [
+    {
+      "date": "2026-09-04",
+      "price": 2480
     }
   ]
 }
