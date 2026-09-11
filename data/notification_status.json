@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-dasimon-10000055",
+      "deal_id": "rakuten-grand-select-shop-10010409",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-09-11T00:51:35.328706+00:00"
+  "checked_at": "2026-09-11T14:52:17.036454+00:00"
 }
