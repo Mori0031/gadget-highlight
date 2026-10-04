@@ -3,10 +3,10 @@
   "posted": 0,
   "errors": [
     {
-      "deal_id": "rakuten-dasimon-10000020",
+      "deal_id": "rakuten-ugreen-gear-10000939",
       "status_code": 402,
       "detail": "{\"detail\":\"credits depleted\",\"status\":402,\"title\":\"Payment Required\",\"type\":\"https://api.x.com/2/problems/credits-depleted\"}"
     }
   ],
-  "checked_at": "2026-10-04T02:26:46.058240+00:00"
+  "checked_at": "2026-10-04T15:41:46.744087+00:00"
 }
